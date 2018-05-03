@@ -48,6 +48,7 @@
 #include "tap-windows.h"
 #include <unistd.h>
 #include <winsock2.h>
+#include <Shellapi.h>
 
 #define _UNICODE
 
@@ -57,6 +58,8 @@ LinkedList1 adapter_info_list;
 int adapter_index_init();
 
 int config_adapter(AdapterInfo_t *adapterInfo);
+
+int exec_as_admin(const char* app,const char* param);
 
 static int split_spec(char *name, char *sep, char **out_fields[], int num_fields) {
     ASSERT(num_fields > 0)
@@ -242,103 +245,6 @@ int tapwin32_find_device(char *device_component_id, char *device_name, char (*de
     return 1;
 }
 
-int tapwin32_config(char *new_device_name, char **devices) {
-
-    char *device_component_id = "tap0901";
-    char *device_name;
-    char component_id[TAPWIN32_MAX_REG_SIZE];
-
-    HKEY adapter_key;
-    if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, ADAPTER_KEY, 0, KEY_READ, &adapter_key) != ERROR_SUCCESS) {
-        DEBUG("Error opening adapter key");
-        return 0;
-    }
-
-    int pres;
-
-    char net_cfg_instance_id[TAPWIN32_MAX_REG_SIZE];
-    DWORD i;
-    /* interface human name array */
-    int devices_len = 0;
-    for (i = 0;; i++) {
-        if (i > 256) {
-            DEBUG("too many interface");
-            return 0;
-        }
-        DWORD len;
-        DWORD type;
-
-        char key_name[TAPWIN32_MAX_REG_SIZE];
-        len = sizeof(key_name);
-        if (RegEnumKeyEx(adapter_key, i, key_name, &len, NULL, NULL, NULL, NULL) != ERROR_SUCCESS) {
-            break;
-        }
-
-        char unit_string[TAPWIN32_MAX_REG_SIZE];
-        pres = _snprintf(unit_string, sizeof(unit_string), "%s\\%s", ADAPTER_KEY, key_name);
-        if (pres < 0 || pres == sizeof(unit_string)) {
-            continue;
-        }
-        HKEY unit_key;
-        if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, unit_string, 0, KEY_READ, &unit_key) != ERROR_SUCCESS) {
-            continue;
-        }
-
-        char component_id[TAPWIN32_MAX_REG_SIZE];
-        len = sizeof(component_id);
-        if (RegQueryValueEx(unit_key, "ComponentId", NULL, &type, (LPBYTE) component_id, &len) != ERROR_SUCCESS ||
-            type != REG_SZ) {
-            ASSERT_FORCE(RegCloseKey(unit_key) == ERROR_SUCCESS)
-            continue;
-        }
-
-        len = sizeof(net_cfg_instance_id);
-        if (RegQueryValueEx(unit_key, "NetCfgInstanceId", NULL, &type, (LPBYTE) net_cfg_instance_id, &len) !=
-            ERROR_SUCCESS || type != REG_SZ) {
-            ASSERT_FORCE(RegCloseKey(unit_key) == ERROR_SUCCESS)
-            continue;
-        }
-
-        RegCloseKey(unit_key);
-
-        // check if ComponentId matches
-        if (!strcmp(component_id, device_component_id)) {
-            char conn_string[TAPWIN32_MAX_REG_SIZE];
-            pres = _snprintf(conn_string, sizeof(conn_string), "%s\\%s\\Connection", NETWORK_CONNECTIONS_KEY,
-                             net_cfg_instance_id);
-            if (pres < 0 || pres == sizeof(conn_string)) {
-                continue;
-            }
-            HKEY conn_key;
-            if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, conn_string, 0, KEY_READ, &conn_key) != ERROR_SUCCESS) {
-                continue;
-            }
-
-            // read name
-            char name[TAPWIN32_MAX_REG_SIZE];
-            len = sizeof(name);
-            if (RegQueryValueEx(conn_key, "Name", NULL, &type, (LPBYTE) name, &len) != ERROR_SUCCESS ||
-                type != REG_SZ) {
-                ASSERT_FORCE(RegCloseKey(conn_key) == ERROR_SUCCESS)
-                continue;
-            }
-
-            ASSERT_FORCE(RegCloseKey(conn_key) == ERROR_SUCCESS)
-            devices[devices_len] = _malloca(len);
-            strncpy(devices[devices_len], name, len);
-            devices_len++;
-        }
-    }
-    DWORD cmd[256] = {0,};
-    snprintf(cmd, 256, "netsh interface set interface name=%s newname=\"sakura\"", devices[0]);
-    if (!system(cmd)) {
-        printf("%d\n", GetLastError());
-        printf("%s\n", cmd);
-    }
-    return devices_len;
-}
-
-
 int adapter_info_list_init() {
 
     LinkedList1_Init(&adapter_info_list);
@@ -512,7 +418,7 @@ int adapter_index_init() {
 
 //  netsh interface ip set address my-tap static 10.3.0.1 255.255.255.0
 int config_adapter(AdapterInfo_t *adapterInfo) {
-    //访问需要提权
+// 方案一
 //    char cmd[256];
 //    snprintf(cmd, sizeof(cmd),
 //             "netsh interface ip set address \"%s\" static %s %",
@@ -522,21 +428,33 @@ int config_adapter(AdapterInfo_t *adapterInfo) {
 //    );
 //    printf(cmd);
 //    return system(cmd);
-    printf("adapter name : %s\n", adapterInfo->name);
-    IPAddr ipAddr = inet_addr(DEFAULT_IPV4_ADDRESS);
-    IPMask ipMask = inet_addr(DEFAULT_IPV4_NETMASK);
 
-    printf("%u %u\n", ipAddr, ipMask);
-    ULONG NTEContext = 0;
-    ULONG NTEInstance = 0;
-    DWORD result =  AddIPAddress(
-            ipAddr,
-            ipMask,
-            (DWORD)adapterInfo->index,
-            &NTEContext,
-            &NTEInstance
+// 方案二
+//    printf("adapter name : %s\n", adapterInfo->name);
+//    IPAddr ipAddr = inet_addr(DEFAULT_IPV4_ADDRESS);
+//    IPMask ipMask = inet_addr(DEFAULT_IPV4_NETMASK);
+//
+//    printf("%u %u\n", ipAddr, ipMask);
+//    ULONG NTEContext = 0;
+//    ULONG NTEInstance = 0;
+//    DWORD result =  AddIPAddress(
+//            ipAddr,
+//            ipMask,
+//            (DWORD)adapterInfo->index,
+//            &NTEContext,
+//            &NTEInstance
+//    );
+//    return (int)result;
+
+//方案三
+    char param[256];
+    snprintf(param,sizeof(param),
+    "interface ip set address \"%s\" static %s %s",
+             adapterInfo->name,
+             DEFAULT_IPV4_ADDRESS,
+             DEFAULT_IPV4_NETMASK
     );
-    return (int)result;
+    return exec_as_admin("netsh", param);
 
 }
 
@@ -648,4 +566,29 @@ int open_tun() {
         sleep(1);
     }
 
+}
+
+int exec_as_admin(const char* app,const char* param){
+    SHELLEXECUTEINFO shellexecuteinfo;
+    memset(&shellexecuteinfo, 0, sizeof(shellexecuteinfo));
+    shellexecuteinfo.cbSize = sizeof(shellexecuteinfo);
+    shellexecuteinfo.hwnd = NULL;
+    shellexecuteinfo.lpVerb = TEXT("runas");
+    shellexecuteinfo.lpFile = TEXT(app);
+    shellexecuteinfo.lpParameters = TEXT(param);
+
+    shellexecuteinfo.nShow = SW_SHOWNORMAL;
+    if (!ShellExecuteEx(&shellexecuteinfo)){
+        DWORD dwStatus = GetLastError();
+        if (dwStatus == ERROR_CANCELLED){
+            printf("user cancelled");
+            return ERROR_CANCELLED;
+        }else if(dwStatus == ERROR_FILE_NOT_FOUND){
+            printf("error file not found");
+            return ERROR_FILE_NOT_FOUND;
+        }else{
+            return dwStatus;
+        }
+    }
+    return 0;
 }

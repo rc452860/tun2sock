@@ -39,7 +39,7 @@
  * example:  netsh interface ip set address my-tap static 10.3.0.1 255.255.255.0
  * blow Is ipv4 address and netmask
  * */
-#define DEFAULT_IPV4_ADDRESS "10.3.0.2"
+#define DEFAULT_IPV4_ADDRESS "10.3.0.1"
 #define DEFAULT_IPV4_NETMASK "255.255.255.0"
 
 struct AdapterInfo{
