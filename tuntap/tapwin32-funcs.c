@@ -47,6 +47,7 @@
 #include <winioctl.h>
 #include "tap-windows.h"
 #include <unistd.h>
+#include <winsock2.h>
 
 #define _UNICODE
 
@@ -521,19 +522,19 @@ int config_adapter(AdapterInfo_t *adapterInfo) {
 //    );
 //    printf(cmd);
 //    return system(cmd);
-    IPAddr ipAddr;
-    IPMask ipMask;
-    ipv4_string_to_int(DEFAULT_IPV4_ADDRESS, &ipAddr);
-    ipv4_string_to_int(DEFAULT_IPV4_NETMASK, &ipMask);
+    printf("adapter name : %s\n", adapterInfo->name);
+    IPAddr ipAddr = inet_addr(DEFAULT_IPV4_ADDRESS);
+    IPMask ipMask = inet_addr(DEFAULT_IPV4_NETMASK);
 
-    PULONG NTEContext;
-    PULONG NTEInstance;
+    printf("%u %u\n", ipAddr, ipMask);
+    ULONG NTEContext = 0;
+    ULONG NTEInstance = 0;
     DWORD result =  AddIPAddress(
             ipAddr,
             ipMask,
-            adapterInfo->index,
-            NTEContext,
-            NTEInstance
+            (DWORD)adapterInfo->index,
+            &NTEContext,
+            &NTEInstance
     );
     return (int)result;
 
@@ -634,6 +635,14 @@ int open_tun() {
     {
         int status = config_adapter(adapterInfoUsed);
         printf("%d\n", status);
+    }
+
+    {
+        ULONG upstatus = TRUE;
+        int len;
+        if (!DeviceIoControl(handle, TAP_IOCTL_SET_MEDIA_STATUS, &upstatus, sizeof(upstatus), &upstatus, sizeof(upstatus), &len, NULL)) {
+            printf("connection faild");
+        }
     }
     for (int i = 0; i < 15; ++i) {
         sleep(1);

@@ -212,10 +212,11 @@ int ipv4_string_to_int(const char *ipv4_addr, uint32_t *out_addr) {
     for (int i = 0; i < 4; ++i) {
         char c;
         uint8_t n = 0;
+        int j = 0;
         while (1) {
             c = *start;
             start++;
-            if (c >= '0' && c < '9') {
+            if (c >= '0' && c <= '9') {
                 n *= 10;
                 n += c - '0';
             } else if ((i < 3 && c == '.') || i == 3) {
@@ -223,7 +224,9 @@ int ipv4_string_to_int(const char *ipv4_addr, uint32_t *out_addr) {
             } else {
                 return FORMAT_ERROR;
             }
+            j++;
         }
+        printf("%d ", n);
         if (n >= 256) {
             return FORMAT_ERROR;
         }
