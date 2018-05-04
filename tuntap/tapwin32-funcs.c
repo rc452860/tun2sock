@@ -49,6 +49,7 @@
 #include <unistd.h>
 #include <winsock2.h>
 #include <Shellapi.h>
+#include "misc/basic.h"
 
 #define _UNICODE
 
@@ -338,6 +339,7 @@ int adapter_info_list_init() {
             devices_len++;
             // 初始化adapterInfo来存储适配器信息
             AdapterInfo_t *adapterInfo = (AdapterInfo_t *) malloc(sizeof(AdapterInfo_t));
+            adapterInfo->index = TUN_ADAPTER_INDEX_INVALID;
             memcpy(adapterInfo->net_cfg_instance_id, net_cfg_instance_id, TAPWIN32_MAX_REG_SIZE);
             // 设置MTU
             sscanf(mtu, "%d", &adapterInfo->mtu);
@@ -577,7 +579,7 @@ int exec_as_admin(const char* app,const char* param){
     shellexecuteinfo.lpFile = TEXT(app);
     shellexecuteinfo.lpParameters = TEXT(param);
 
-    shellexecuteinfo.nShow = SW_SHOWNORMAL;
+    shellexecuteinfo.nShow = SW_HIDE;
     if (!ShellExecuteEx(&shellexecuteinfo)){
         DWORD dwStatus = GetLastError();
         if (dwStatus == ERROR_CANCELLED){
@@ -592,3 +594,4 @@ int exec_as_admin(const char* app,const char* param){
     }
     return 0;
 }
+

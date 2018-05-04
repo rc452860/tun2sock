@@ -35,6 +35,7 @@
 #include <structure/LinkedList1.h>
 
 #define TAPWIN32_MAX_REG_SIZE 256
+#define TUN_ADAPTER_INDEX_INVALID -1
 /*
  * example:  netsh interface ip set address my-tap static 10.3.0.1 255.255.255.0
  * blow Is ipv4 address and netmask
