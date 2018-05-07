@@ -22,9 +22,7 @@ struct route_ipv4 {
 #define RT_DEFINED        (1<<0)
 #define RT_ADDED          (1<<1)
 #define RT_METRIC_DEFINED (1<<2)
-    struct route_ipv4 *next;
     unsigned int flags;
-    const struct route_option *option;
     in_addr_t network;
     in_addr_t netmask;
     in_addr_t gateway;

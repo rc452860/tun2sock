@@ -5,6 +5,9 @@
 #ifndef BADVPN_BASIC_H
 #define BADVPN_BASIC_H
 
+#include <stdint.h>
+#include <stdio.h>
+
 /* bool definitions */
 #define bool int
 #define true 1
@@ -95,6 +98,19 @@ struct gc_arena {
 };
 
 
+
+void x_gc_free(struct gc_arena *a);
+
+void x_gc_freespecial(struct gc_arena *a);
+
+
+static inline void
+gc_init(struct gc_arena *a)
+{
+    a->list = NULL;
+    a->list_special = NULL;
+}
+
 static inline struct gc_arena
 gc_new(void) {
     struct gc_arena ret;
@@ -123,7 +139,7 @@ check_malloc_return(const void *p)
 {
     if (!p)
     {
-        out_of_memory();
+        printf("out of memory");
     }
 }
 

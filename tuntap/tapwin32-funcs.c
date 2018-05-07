@@ -50,6 +50,7 @@
 #include <winsock2.h>
 #include <Shellapi.h>
 #include "misc/basic.h"
+#include "route.h"
 
 #define _UNICODE
 
@@ -421,15 +422,15 @@ int adapter_index_init() {
 //  netsh interface ip set address my-tap static 10.3.0.1 255.255.255.0
 int config_adapter(AdapterInfo_t *adapterInfo) {
 // 方案一
-//    char cmd[256];
-//    snprintf(cmd, sizeof(cmd),
-//             "netsh interface ip set address \"%s\" static %s %",
-//             adapterInfo->name,
-//             DEFAULT_IPV4_ADDRESS,
-//             DEFAULT_IPV4_NETMASK
-//    );
-//    printf(cmd);
-//    return system(cmd);
+    char cmd[256];
+    snprintf(cmd, sizeof(cmd),
+             "netsh interface ip set address \"%s\" static %s %",
+             adapterInfo->name,
+             DEFAULT_IPV4_ADDRESS,
+             DEFAULT_IPV4_NETMASK
+    );
+    printf(cmd);
+    return system(cmd);
 
 // 方案二
 //    printf("adapter name : %s\n", adapterInfo->name);
@@ -449,14 +450,14 @@ int config_adapter(AdapterInfo_t *adapterInfo) {
 //    return (int)result;
 
 //方案三
-    char param[256];
-    snprintf(param,sizeof(param),
-    "interface ip set address \"%s\" static %s %s",
-             adapterInfo->name,
-             DEFAULT_IPV4_ADDRESS,
-             DEFAULT_IPV4_NETMASK
-    );
-    return exec_as_admin("netsh", param);
+//    char param[256];
+//    snprintf(param,sizeof(param),
+//    "interface ip set address \"%s\" static %s %s",
+//             adapterInfo->name,
+//             DEFAULT_IPV4_ADDRESS,
+//             DEFAULT_IPV4_NETMASK
+//    );
+//    return exec_as_admin("netsh", param);
 
 }
 
