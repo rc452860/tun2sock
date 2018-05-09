@@ -7,7 +7,7 @@
 
 #include "misc/basic.h"
 #include <stdint.h>
-
+#include "structure/LinkedList1.h"
 #ifdef _WIN32
 #include <windows.h>
 #include <iphlpapi.h>
@@ -38,4 +38,8 @@ typedef struct route_ipv4 route_ipv4_t;
  * @return
  */
 bool add_route_ipapi(route_ipv4_t *r,DWORD index,DWORD metric);
-#endif //BADVPN_ROUTE_H
+
+LinkedList1 * get_default_route();
+
+
+#endif; //BADVPN_ROUTE_H

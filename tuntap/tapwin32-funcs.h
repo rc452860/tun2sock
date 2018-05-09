@@ -33,6 +33,8 @@
 #include <stdint.h>
 #include <windows.h>
 #include <structure/LinkedList1.h>
+#include <iptypes.h>
+#include <iphlpapi.h>
 
 #define TAPWIN32_MAX_REG_SIZE 256
 #define TUN_ADAPTER_INDEX_INVALID -1
@@ -63,5 +65,31 @@ int tapwin32_parse_tun_spec (char *name, char **out_component_id, char **out_hum
 int tapwin32_find_device (char *device_component_id, char *device_name, char (*device_path)[TAPWIN32_MAX_REG_SIZE]);
 int tapwin32_config(char* new_device_name,char **devices);
 int adapter_info_list_init();
+
+IP_ADAPTER_INFO *get_adapter_info_list(struct gc_arena *gc)
+{
+    ULONG size = 0;
+    IP_ADAPTER_INFO *pi = NULL;
+    DWORD status;
+
+    if ((status = GetAdaptersInfo(NULL, &size)) != ERROR_BUFFER_OVERFLOW)
+    {
+        msg(M_INFO, "GetAdaptersInfo #1 failed (status=%u) : %s",
+            (unsigned int)status,
+            strerror_win32(status, gc));
+    }
+    else
+    {
+        pi = (PIP_ADAPTER_INFO) gc_malloc(size, false, gc);
+        if ((status = GetAdaptersInfo(pi, &size)) != NO_ERROR)
+        {
+            msg(M_INFO, "GetAdaptersInfo #2 failed (status=%u) : %s",
+                (unsigned int)status,
+                strerror_win32(status, gc));
+            pi = NULL;
+        }
+    }
+    return pi;
+}
 int open_tun();
 #endif

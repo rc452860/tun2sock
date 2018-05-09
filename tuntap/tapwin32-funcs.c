@@ -552,11 +552,17 @@ int open_tun() {
             return -1;
         }
     }
-    // 设置ip地址
+    // 设置ip地址 以及初始化路由
     {
         int status = config_adapter(adapterInfoUsed);
         printf("%d\n", status);
+
+        route_ipv4_t route;
+
+        route.gateway =  inet_addr(DEFAULT_IPV4_ADDRESS);
     }
+
+
 
     {
         ULONG upstatus = TRUE;
@@ -571,6 +577,9 @@ int open_tun() {
 
 }
 
+/**
+ * 使用admin权限运行
+ */
 int exec_as_admin(const char* app,const char* param){
     SHELLEXECUTEINFO shellexecuteinfo;
     memset(&shellexecuteinfo, 0, sizeof(shellexecuteinfo));

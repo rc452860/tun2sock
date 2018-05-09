@@ -7,7 +7,7 @@
 #include "tapwin32-funcs.h"
 #include "misc/socket_gc.h"
 
-static bool add_route_ipapi(route_ipv4_t *r, DWORD index, DWORD metric);
+bool add_route_ipapi(route_ipv4_t *r, DWORD index, DWORD metric);
 
 
 bool add_route_ipapi(route_ipv4_t *r, DWORD index, DWORD metric) {
@@ -77,4 +77,8 @@ bool add_route_ipapi(route_ipv4_t *r, DWORD index, DWORD metric) {
 
     gc_free(&gc);
     return ret;
+}
+
+LinkedList1 *get_default_route(){
+
 }

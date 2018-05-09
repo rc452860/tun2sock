@@ -25,10 +25,10 @@ VS_VERSION_INFO VERSIONINFO
                 VALUE "CompanyName", "BeiJing XXXX Co., Ltd."
                 VALUE "FileDescription", "Industrial Control System"
                 VALUE "FileVersion", "1.0.0.0"
-                VALUE "InternalName", "Qt Studio.exe"
+                VALUE "InternalName", "tun2socks.exe"
                 VALUE "LegalCopyright", "Copyright (C)2001-2013"
-                VALUE "OriginalFilename", "Qt Studio.exe"
-                VALUE "ProductName", "Qt Studio"
+                VALUE "OriginalFilename", "tun2socks.exe"
+                VALUE "ProductName", "tun2socks"
                 VALUE "ProductVersion", "1.0.0.0"
             END
         END
